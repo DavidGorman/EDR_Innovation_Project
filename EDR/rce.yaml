@@ -1,0 +1,27 @@
+# Owner: David. Attack slice: RCE.
+# Rules fire when ALL conditions match one process_start event.
+
+- id: PROC-RCE-001
+  title: Shell or tool spawned by the Juice Shop process
+  owner: David
+  event_type: process_start
+  severity: HIGH
+  mitre: T1059.004
+  conditions:
+    - {field: parent_name, op: equals, value: node}
+    - {field: name, op: in, value: [sh, bash, dash, zsh, nc, ncat, curl, wget, python, python3, perl]}
+  response: kill_process
+
+# Broader net: suspicious recon commands running as the Juice Shop user, even
+# when the parent is no longer node (the attacker's shell already moved on).
+# Alert only, so it never kills a legitimate process by mistake.
+- id: PROC-RCE-002
+  title: Recon command under the Juice Shop user
+  owner: David
+  event_type: process_start
+  severity: MEDIUM
+  mitre: T1059
+  conditions:
+    - {field: user, op: in, value: [juice]}
+    - {field: name, op: in, value: [whoami, id, uname, nc, ncat]}
+  response: none
