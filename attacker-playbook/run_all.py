@@ -12,6 +12,7 @@ caused them (MTTD).
     python3 run_all.py --target http://10.0.0.5:3000
     python3 run_all.py --only sqli,brute_force
     python3 run_all.py --skip rce,ssti
+    python3 run_all.py --only file_upload
     python3 run_all.py --list          # show attack names and exit
 
 Runs on Kali (the intended attacker box) or on Windows -- it only sends HTTP,
@@ -139,7 +140,10 @@ def main():
                             "--password", args.password], e)
     def a_rce(e):      run([PY, "scripts/09_rce.py",
                             "--target", target, "--mode", RCE_MODE], e)
-    def a_pwchange(e): run([PY, "scripts/10_password_change.py"], e)
+    def a_fileupload(e):
+        # self-logs-in for an upload token using JS_EMAIL/JS_PASSWORD in env.
+        run([PY, "scripts/10_file_upload.py", "--case", "all"], e)
+    def a_pwchange(e): run([PY, "scripts/11_password_change.py"], e)
 
     ATTACKS = [
         ("normal_login", a_normal),
@@ -150,6 +154,7 @@ def main():
         ("invalid_token", a_invalid),
         ("ssti", a_ssti),
         ("rce", a_rce),
+        ("file_upload", a_fileupload),
         ("password_change_no_old", a_pwchange),
     ]
 
