@@ -1,0 +1,60 @@
+# Owner: Louis. Attack slice: Malicious file upload.
+# Rules fire when ALL conditions match one file_change event.
+
+- id: FILE-UPLOAD-001
+  title: Dangerous file extension uploaded to Juice Shop upload folder
+  owner: Louis
+  event_type: file_change
+  severity: HIGH
+  mitre: T1505.003
+  conditions:
+    - {field: path, op: contains, value: "/upload"}
+    - {field: change, op: equals, value: created}
+    - {field: path, op: regex, value: "\\.(php|jsp|asp|aspx|exe|sh|jar|py)$"}
+  response: quarantine_file
+
+# Juice Shop's own file-upload route only accepts PDF/XML/ZIP, so a renamed
+# JPG or other disguised file still lands with a mismatched/disallowed
+# extension once it hits disk. We can't read magic bytes from the Event
+# schema (no content field), so this catches it by extension plus location
+# instead - same signal our curl bypass testing relies on.
+- id: FILE-UPLOAD-002
+  title: Non-PDF/XML/ZIP file created in upload folder
+  owner: Louis
+  event_type: file_change
+  severity: MEDIUM
+  mitre: T1036.008
+  conditions:
+    - {field: path, op: contains, value: "/upload"}
+    - {field: change, op: equals, value: created}
+    - {field: path, op: regex, value: "\\.(?!pdf$|xml$|zip$)[a-z0-9]+$"}
+  response: quarantine_file
+
+# Juice Shop's stated max upload size is 100000 bytes. Anything larger that
+# still lands on disk means the size check is client-side only.
+- id: FILE-UPLOAD-003
+  title: Oversized file accepted past stated upload limit
+  owner: Louis
+  event_type: file_change
+  severity: MEDIUM
+  mitre: T1499.004
+  conditions:
+    - {field: path, op: contains, value: "/upload"}
+    - {field: change, op: equals, value: created}
+    - {field: size, op: gt, value: 100000}
+  response: none
+
+# Repeated hits on the upload endpoint in a short window, regardless of
+# outcome, usually means someone is fuzzing filename/content-type bypasses
+# rather than a normal user uploading once.
+- id: FILE-UPLOAD-004
+  title: Repeated requests to the file-upload endpoint
+  owner: Louis
+  event_type: http_request
+  severity: LOW
+  mitre: T1505.003
+  conditions:
+    - {field: path, op: regex, value: "/file-upload"}
+    - {field: method, op: equals, value: POST}
+  threshold: {count: 4, window_s: 20, group_by: ip}
+  response: none
