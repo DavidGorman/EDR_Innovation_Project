@@ -36,6 +36,18 @@ def _unquote(v):
     return v[1:-1] if len(v) >= 2 and v[0] == '"' else v
 
 
+def _arg_value(raw_v):
+    """Decode one EXECVE argument. auditd double-quotes args that are plain,
+    and hex-encodes any arg containing spaces or special characters, so a
+    shell command like `sh -c "id; whoami"` arrives as a bare hex string."""
+    if raw_v.startswith('"'):
+        return _unquote(raw_v)
+    try:
+        return bytes.fromhex(raw_v).decode("utf-8", "replace")
+    except ValueError:
+        return raw_v
+
+
 def _parent_name(ppid):
     """Best-effort: read the parent's name from /proc. It may have exited."""
     try:
@@ -101,13 +113,14 @@ class ProcessAgent(Agent):
             rec = records.setdefault(m.group("id"),
                                      {"ts": float(m.group("ts")),
                                       "syscall": None, "argv": None})
-            fields = {k: _unquote(v) for k, v in FIELD_RE.findall(raw)}
+            raw_fields = dict(FIELD_RE.findall(raw))
             if raw.startswith("type=SYSCALL"):
-                if fields.get("key") == self.key:
-                    rec["syscall"] = fields
+                if _unquote(raw_fields.get("key", "")) == self.key:
+                    rec["syscall"] = {k: _unquote(v) for k, v in raw_fields.items()}
             elif raw.startswith("type=EXECVE"):
-                argc = int(fields.get("argc", 0))
-                rec["argv"] = [fields.get(f"a{i}", "") for i in range(argc)]
+                argc = int(raw_fields.get("argc", "0"))
+                rec["argv"] = [_arg_value(raw_fields.get(f"a{i}", '""'))
+                               for i in range(argc)]
 
         events = []
         for rec in records.values():
