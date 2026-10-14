@@ -1,0 +1,22 @@
+- id: WEB-BRUTE-001
+  title: Brute-force login
+  owner: Oliver
+  event_type: http_request
+  severity: HIGH
+  mitre: T1110.001
+
+  conditions:
+    - field: path
+      op: regex
+      value: "/rest/user/login"
+
+    - field: status
+      op: in
+      value: [401]
+
+  threshold:
+    count: 5
+    window_s: 15
+    group_by: ip
+
+  response: block_ip
