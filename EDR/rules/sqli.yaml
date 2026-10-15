@@ -1,0 +1,25 @@
+# Owner: Thapanawat. Attack slice: SQL injection (product search).
+# Rules fire when ALL conditions match one http_request event.
+
+- id: WEB-SQLI-001
+  title: SQL injection in product search
+  owner: Thapanawat
+  event_type: http_request
+  severity: HIGH
+  mitre: T1190
+  conditions:
+    - {field: path, op: regex, value: "/rest/products/search"}
+    - {field: path, op: regex, value: "union\\s+select|[\"']\\s*or\\s+[\"']?\\d|\\bor\\s+1\\s*=\\s*1\\b|\\bor\\s+true\\b|[\"'][^\"']*[\"']\\s*=\\s*[\"']?\\w|[\"']\\s*and\\s+\\d+\\s*=\\s*\\d+|order\\s+by\\s+\\d+|group\\s+by\\s+\\d|[\"'][^&]*(--|#)|[\"']\\s*\\)\\s*\\)|/\\*|;\\s*(drop|insert|update|delete|select)\\b|sleep\\s*\\(|pg_sleep\\s*\\(|benchmark\\s*\\(|waitfor\\s+delay|extractvalue\\s*\\(|updatexml\\s*\\(|cast\\s*\\(|convert\\s*\\(|char\\s*\\(\\s*\\d|0x[0-9a-f]{6,}|information_schema|sqlite_master|sqlite_version\\s*\\(|@@version"}
+  response: block_ip
+
+- id: WEB-SQLI-002
+  title: Error-based SQL injection in product search (obfuscated)
+  owner: Thapanawat
+  event_type: http_request
+  severity: MEDIUM
+  mitre: T1190
+  conditions:
+    - {field: path, op: regex, value: "/rest/products/search"}
+    - {field: status, op: in, value: [500]}
+    - {field: path, op: regex, value: "'[^&]*('|--|#|\\)|;|=)|/\\*|\\*/|char\\s*\\(|concat\\s*\\(|union|select|sleep|benchmark"}
+  response: none
