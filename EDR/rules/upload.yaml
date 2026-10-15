@@ -1,52 +1,57 @@
 # Owner: Louis. Attack slice: Malicious file upload.
-# Rules fire when ALL conditions match one file_change event.
+# Rules fire when ALL conditions match one file_change event (001-003),
+# or one http_request event (004).
+#
+# The fim-agent only watches the upload folder, so every file_change is
+# already in-scope - there is no need to re-check the path for "/upload",
+# which would silently break if the real folder is not named that way.
 
 - id: FILE-UPLOAD-001
-  title: Dangerous file extension uploaded to Juice Shop upload folder
+  title: Dangerous executable extension written to the upload folder
   owner: Louis
   event_type: file_change
   severity: HIGH
   mitre: T1505.003
   conditions:
-    - {field: path, op: contains, value: "/upload"}
     - {field: change, op: equals, value: created}
     - {field: path, op: regex, value: "\\.(php|jsp|asp|aspx|exe|sh|jar|py)$"}
   response: quarantine_file
 
-# Juice Shop's own file-upload route only accepts PDF/XML/ZIP, so a renamed
-# JPG or other disguised file still lands with a mismatched/disallowed
-# extension once it hits disk. We can't read magic bytes from the Event
-# schema (no content field), so this catches it by extension plus location
-# instead - same signal our curl bypass testing relies on.
+# Juice Shop's upload route is meant to accept PDF/XML/ZIP only. Anything with
+# another extension that still lands on disk slipped past the type check. The
+# dangerous executable extensions are handled by FILE-UPLOAD-001 above, so they
+# are excluded here to keep the two rules from both firing on one file.
+# Note: a file with disguised CONTENT but an allowed extension (e.g. a JPG
+# renamed to .pdf) cannot be caught from the Event schema, which carries no
+# magic-byte/content field - detect those by content-type at the web layer.
 - id: FILE-UPLOAD-002
-  title: Non-PDF/XML/ZIP file created in upload folder
+  title: Disallowed file type created in the upload folder
   owner: Louis
   event_type: file_change
   severity: MEDIUM
   mitre: T1036.008
   conditions:
-    - {field: path, op: contains, value: "/upload"}
     - {field: change, op: equals, value: created}
-    - {field: path, op: regex, value: "\\.(?!pdf$|xml$|zip$)[a-z0-9]+$"}
+    - {field: path, op: regex, value: "\\.(?!pdf$|xml$|zip$|php$|jsp$|asp$|aspx$|exe$|sh$|jar$|py$)[a-z0-9]+$"}
   response: quarantine_file
 
 # Juice Shop's stated max upload size is 100000 bytes. Anything larger that
-# still lands on disk means the size check is client-side only.
+# still lands on disk means the size check was client-side only.
 - id: FILE-UPLOAD-003
-  title: Oversized file accepted past stated upload limit
+  title: Oversized file accepted past the stated upload limit
   owner: Louis
   event_type: file_change
   severity: MEDIUM
   mitre: T1499.004
   conditions:
-    - {field: path, op: contains, value: "/upload"}
     - {field: change, op: equals, value: created}
     - {field: size, op: gt, value: 100000}
   response: none
 
 # Repeated hits on the upload endpoint in a short window, regardless of
-# outcome, usually means someone is fuzzing filename/content-type bypasses
-# rather than a normal user uploading once.
+# outcome, usually mean someone is fuzzing filename/content-type bypasses
+# rather than a normal user uploading once. This reads the web agent's
+# http_request events, so it fires even when nothing is persisted to disk.
 - id: FILE-UPLOAD-004
   title: Repeated requests to the file-upload endpoint
   owner: Louis
