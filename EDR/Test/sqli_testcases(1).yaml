@@ -59,3 +59,54 @@
   label: benign
   expected_rule: none
   command: python3 benign/search.py --term "drop table lamp"
+
+  # Louis - Malicious file upload slice
+# Add these entries into the team's shared tests/testcases.yaml
+
+- id: TC-UPLOAD-01
+  owner: Louis
+  label: malicious
+  expected_rule: FILE-UPLOAD-002
+  command: python3 attacker-playbook/scripts/11_file_upload.py --case renamed_extension
+
+- id: TC-UPLOAD-02
+  owner: Louis
+  label: malicious
+  expected_rule: FILE-UPLOAD-001
+  command: python3 attacker-playbook/scripts/11_file_upload.py --case dangerous_extension
+
+- id: TC-UPLOAD-03
+  owner: Louis
+  label: malicious
+  expected_rule: FILE-UPLOAD-003
+  command: python3 attacker-playbook/scripts/11_file_upload.py --case oversized
+
+- id: TC-UPLOAD-04
+  owner: Louis
+  label: malicious
+  expected_rule: FILE-UPLOAD-004
+  command: python3 attacker-playbook/scripts/11_file_upload.py --case fuzz_endpoint
+
+- id: TC-UPLOAD-B01
+  owner: Louis
+  label: benign
+  expected_rule: none
+  command: python3 attacker-playbook/benign/upload_legit_pdf.py
+
+- id: TC-UPLOAD-B02
+  owner: Louis
+  label: benign
+  expected_rule: none
+  command: python3 attacker-playbook/benign/upload_under_limit_pdf.py
+
+- id: TC-UPLOAD-B03
+  owner: Louis
+  label: benign
+  expected_rule: none
+  command: python3 attacker-playbook/benign/upload_zip.py
+
+- id: TC-UPLOAD-B04
+  owner: Louis
+  label: benign
+  expected_rule: none
+  command: python3 attacker-playbook/benign/upload_single_pdf_slow.py
