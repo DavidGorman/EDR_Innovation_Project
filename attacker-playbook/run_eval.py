@@ -16,7 +16,11 @@ except ImportError:
     sys.exit("Missing dependency: pip install pyyaml")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_CASES = os.path.join(HERE, "..", "EDR", "Test", "testcases.yaml")
+# testcases.yaml lives alongside run_eval here in attacker-playbook/, so the
+# Kali box is self-contained; fall back to the EDR/Test copy if that's all there is.
+_LOCAL = os.path.join(HERE, "testcases.yaml")
+_EDR = os.path.join(HERE, "..", "EDR", "Test", "testcases.yaml")
+DEFAULT_CASES = _LOCAL if os.path.exists(_LOCAL) else _EDR
 DEFAULT_LOG = os.path.join(HERE, "attack_log.csv")
 
 
