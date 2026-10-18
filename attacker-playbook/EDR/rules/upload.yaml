@@ -1,0 +1,49 @@
+# Owner: Louis. Attack slice: malicious file upload.
+# 001-003 match file_change events from the fim-agent; 004 matches repeated
+# POSTs to the upload endpoint (http_request), so it fires even if nothing persists.
+
+- id: FILE-UPLOAD-001
+  title: Dangerous executable extension written to the upload folder
+  owner: Louis
+  event_type: file_change
+  severity: HIGH
+  mitre: T1505.003
+  conditions:
+    - {field: change, op: equals, value: created}
+    - {field: path, op: regex, value: "\\.(php|jsp|asp|aspx|exe|sh|jar|py)$"}
+  response: quarantine_file
+
+# Any disallowed extension (PDF/XML/ZIP are allowed); dangerous ones are 001's.
+- id: FILE-UPLOAD-002
+  title: Disallowed file type created in the upload folder
+  owner: Louis
+  event_type: file_change
+  severity: MEDIUM
+  mitre: T1036.008
+  conditions:
+    - {field: change, op: equals, value: created}
+    - {field: path, op: regex, value: "\\.(?!pdf$|xml$|zip$|php$|jsp$|asp$|aspx$|exe$|sh$|jar$|py$)[a-z0-9]+$"}
+  response: quarantine_file
+
+- id: FILE-UPLOAD-003
+  title: Oversized file accepted past the stated upload limit
+  owner: Louis
+  event_type: file_change
+  severity: MEDIUM
+  mitre: T1499.004
+  conditions:
+    - {field: change, op: equals, value: created}
+    - {field: size, op: gt, value: 100000}
+  response: none
+
+- id: FILE-UPLOAD-004
+  title: Repeated requests to the file-upload endpoint
+  owner: Louis
+  event_type: http_request
+  severity: LOW
+  mitre: T1505.003
+  conditions:
+    - {field: path, op: regex, value: "/file-upload"}
+    - {field: method, op: equals, value: POST}
+  threshold: {count: 4, window_s: 20, group_by: ip}
+  response: none

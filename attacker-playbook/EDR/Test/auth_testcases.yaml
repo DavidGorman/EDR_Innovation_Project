@@ -1,0 +1,47 @@
+# Owner: Kikiola. Attack slice: Broken authentication.
+# Run the commands from the attacker-playbook/ directory on Kali.
+# (These replace Kikiola's separate edr.py + monitor files, which do not plug
+#  into the EDR7 engine. The shared web agent already collects the telemetry.)
+#
+# Malicious:
+#   WEB-AUTH-001 = password changed without the current password (10)
+#   WEB-AUTH-002 = invalid / forged token on a protected endpoint (07)
+# Benign: normal authenticated activity that must NOT trip the auth rules.
+
+- id: TC-AUTH-01
+  owner: Kikiola
+  label: malicious
+  expected_rule: WEB-AUTH-001
+  command: python3 scripts/10_password_change.py
+
+- id: TC-AUTH-02
+  owner: Kikiola
+  label: malicious
+  expected_rule: WEB-AUTH-002
+  command: python3 scripts/07_invalid_token.py
+
+# A forged Bearer token sent straight to a protected endpoint -> 401 on whoami.
+- id: TC-AUTH-03
+  owner: Kikiola
+  label: malicious
+  expected_rule: WEB-AUTH-002
+  command: 'curl -s -H "Authorization: Bearer forged.invalid.token" "http://192.168.100.51:3000/rest/user/whoami" -o /dev/null'
+
+# A normal successful login: the key look-alike. Must not trip any auth rule.
+- id: TC-AUTH-B01
+  owner: Kikiola
+  label: benign
+  expected_rule: none
+  command: python3 scripts/01_normal_login.py
+
+- id: TC-AUTH-B02
+  owner: Kikiola
+  label: benign
+  expected_rule: none
+  command: curl -s "http://192.168.100.51:3000/" -o /dev/null
+
+- id: TC-AUTH-B03
+  owner: Kikiola
+  label: benign
+  expected_rule: none
+  command: curl -s "http://192.168.100.51:3000/rest/products/search?q=juice" -o /dev/null

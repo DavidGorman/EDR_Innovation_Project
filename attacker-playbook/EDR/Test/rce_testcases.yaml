@@ -1,0 +1,46 @@
+# Owner: David. Attack slice: RCE (remote code execution).
+# Run the commands from the attacker-playbook/ directory on Kali.
+#
+# Malicious cases use the SSTI runner (08), which makes the Juice Shop node
+# process spawn a shell - the signal PROC-RCE-001 detects. This is proven to
+# fire on a stock Juice Shop (no source edit needed).
+# Benign cases are activity that must NOT trip the process rules, including a
+# sandboxed DoS RCE attempt (09 dos-loop) that never spawns a child process.
+
+- id: TC-RCE-01
+  owner: David
+  label: malicious
+  expected_rule: PROC-RCE-001
+  command: python3 scripts/08_ssti.py --target http://192.168.100.51:3000 --email admin@juice-sh.op --password admin123 --cmd "id"
+
+- id: TC-RCE-02
+  owner: David
+  label: malicious
+  expected_rule: PROC-RCE-001
+  command: python3 scripts/08_ssti.py --target http://192.168.100.51:3000 --email admin@juice-sh.op --password admin123 --cmd "uname -a"
+
+- id: TC-RCE-03
+  owner: David
+  label: malicious
+  expected_rule: PROC-RCE-001
+  command: python3 scripts/08_ssti.py --target http://192.168.100.51:3000 --email admin@juice-sh.op --password admin123 --cmd "cat /etc/passwd"
+
+# Sandboxed DoS RCE: hits the vulnerable endpoint but stays inside the vm
+# sandbox, so no child process is spawned. The process rules must stay quiet.
+- id: TC-RCE-B01
+  owner: David
+  label: benign
+  expected_rule: none
+  command: python3 scripts/09_rce.py --target http://192.168.100.51:3000 --mode dos-loop
+
+- id: TC-RCE-B02
+  owner: David
+  label: benign
+  expected_rule: none
+  command: python3 scripts/01_normal_login.py
+
+- id: TC-RCE-B03
+  owner: David
+  label: benign
+  expected_rule: none
+  command: curl -s "http://192.168.100.51:3000/rest/products/search?q=apple" -o /dev/null
