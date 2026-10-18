@@ -1,16 +1,7 @@
-"""
-engine.py - the detection engine for the EDR7 mini-EDR.
-
-Loads rules from rules/*.yaml and turns Events into Alerts. Detection logic
-lives in the rules, not in the agents, so the EDR is customisable without
-code changes (the client requirement).
-
-The engine is the only place that:
-  - matches events against everyone's rules
-  - counts threshold attacks (brute force) over a time window
-  - tags each alert with its MITRE technique
-  - stamps the MTTD (detected_at - observed_at)
-"""
+#!/usr/bin/env python3
+# Owner: David. The detection engine: loads rules from rules/*.yaml and turns
+# Events into Alerts, handling threshold (brute-force) windows, dedup, MITRE
+# tagging and the MTTD stamp. Detection logic lives in the rules, not the agents.
 
 import glob
 import os
@@ -22,13 +13,10 @@ import yaml
 
 from edr_core import Alert
 
-# cooldown for repeat alerts from the same rule + key, in seconds
-DEDUP_WINDOW = 30
+DEDUP_WINDOW = 30       # seconds to suppress a repeat of the same rule + key
 
 
 class Rule:
-    """One detection rule loaded from a YAML entry."""
-
     def __init__(self, raw: dict):
         self.id = raw["id"]
         self.title = raw["title"]
@@ -37,14 +25,13 @@ class Rule:
         self.severity = raw.get("severity", "MEDIUM")
         self.mitre = raw.get("mitre", "")
         self.conditions = raw.get("conditions", [])
-        self.threshold = raw.get("threshold")        # dict or None
+        self.threshold = raw.get("threshold")
         self.response = raw.get("response", "none")
-        for cond in self.conditions:                 # pre-compile regexes once
+        for cond in self.conditions:
             if cond.get("op") == "regex":
                 cond["_rx"] = re.compile(str(cond["value"]), re.I)
 
     def event_matches(self, event) -> bool:
-        """True if the event type matches and every per-event condition holds."""
         if event.event_type != self.event_type:
             return False
         return all(_check(cond, event.data) for cond in self.conditions)
@@ -84,7 +71,6 @@ class DetectionEngine:
         self.recent = {}                      # (rule_id, dedup_key) -> last_detected_at
 
     def load_rules(self, path: str) -> int:
-        """Load every *.yaml under a folder, or a single file. Returns rule count."""
         if os.path.isdir(path):
             files = sorted(glob.glob(os.path.join(path, "*.yaml")) +
                            glob.glob(os.path.join(path, "*.yml")))
@@ -104,7 +90,6 @@ class DetectionEngine:
         return len(self.rules)
 
     def evaluate(self, events) -> list:
-        """Run every event against every rule and return a list of Alerts."""
         alerts = []
         for event in events:
             for rule in self.rules:

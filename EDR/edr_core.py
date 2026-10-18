@@ -1,16 +1,7 @@
-"""
-edr_core.py - shared core for the EDR7 mini-EDR.
-
-Everything the agents, the engine and the responder share lives here:
-  - Event     : one thing an agent observed on the host
-  - Alert     : one detection the engine produced
-  - Agent     : base class, subclasses implement collect() only
-  - AlertSink : shows alerts on screen and writes them to alerts.jsonl
-
-Design rule: agents only collect, the engine detects, the responder acts.
-This is a change from the lecturer's starter code, where each agent did its
-own detect() and respond().
-"""
+#!/usr/bin/env python3
+# Owner: David. Shared core for the EDR7 mini-EDR: the Event and Alert types,
+# the Agent base class (subclasses implement collect() only), and the AlertSink
+# that prints alerts and writes them to alerts.jsonl.
 
 import argparse
 import datetime
@@ -35,14 +26,9 @@ def now_iso():
 
 @dataclass
 class Event:
-    """One thing that happened on the host. Produced by an agent's collect().
-
-    observed_at must come from the SOURCE (the log line's time, the process
-    create time, the file mtime), never from poll time, or our MTTD is wrong.
-    """
     agent: str
     event_type: str                 # http_request | process_start | file_change | net_connection
-    observed_at: float              # epoch seconds, from the source
+    observed_at: float              # epoch seconds, from the source (never poll time)
     data: dict = field(default_factory=dict)
     host: str = field(default_factory=socket.gethostname)
     collected_at: float = field(default_factory=time.time)
@@ -51,7 +37,6 @@ class Event:
 
 @dataclass
 class Alert:
-    """One detection. Built by the engine, never by an agent."""
     rule_id: str
     title: str
     severity: str                   # LOW | MEDIUM | HIGH
@@ -68,24 +53,17 @@ class Alert:
 
 
 class Agent:
-    """Base class. Subclasses set `name` and implement collect()."""
     name = "base-agent"
 
     def __init__(self, interval: float = 2.0):
         self.interval = interval
 
     def collect(self) -> list:
-        """Return new Events since the last call.
-
-        Must never raise: wrap the real work in try/except and return [] on
-        error, so one agent cannot bring the whole EDR down.
-        """
+        # Return new Events since the last call. Must never raise.
         raise NotImplementedError
 
 
 class AlertSink:
-    """Shows alerts on screen and keeps a permanent JSONL record."""
-
     def __init__(self, path: str = ALERT_LOG):
         self.path = path
         os.makedirs(os.path.dirname(path), exist_ok=True)

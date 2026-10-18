@@ -1,24 +1,8 @@
-"""
-agent_process.py - RCE detection telemetry for the EDR7 mini-EDR.
-
-Owner: David. Attack slice: remote code execution (RCE).
-
-Reads auditd's execve records (the proc_exec rule) from /var/log/audit/audit.log
-and emits one process_start Event per command run on the host. This catches a
-command however short it is, which polling with psutil cannot: an RCE command
-like `id` or `whoami` finishes in milliseconds and a 2 second poll would miss
-it. It is also the same evidence the Wazuh baseline uses, which keeps the
-comparison fair.
-
-Prereq on the Juice Shop VM (also in the spec):
-  sudo apt install auditd -y
-  JS_UID=$(systemctl show -p User --value juiceshop.service | xargs id -u)
-  echo "-a always,exit -F arch=b64 -S execve -F uid=$JS_UID -k proc_exec" \
-      | sudo tee /etc/audit/rules.d/juiceshop.rules
-  sudo augenrules --load
-
-Run the EDR with sudo so this can read audit.log.
-"""
+#!/usr/bin/env python3
+# Owner: David. RCE telemetry for the EDR7 mini-EDR. Reads auditd's execve
+# records from /var/log/audit/audit.log and emits one process_start Event per
+# command, which catches short-lived RCE commands that polling would miss.
+# Run the EDR with sudo so this can read audit.log.
 
 import os
 import pwd
@@ -37,9 +21,7 @@ def _unquote(v):
 
 
 def _arg_value(raw_v):
-    """Decode one EXECVE argument. auditd double-quotes args that are plain,
-    and hex-encodes any arg containing spaces or special characters, so a
-    shell command like `sh -c "id; whoami"` arrives as a bare hex string."""
+    # auditd hex-encodes execve args containing spaces/special chars; decode them.
     if raw_v.startswith('"'):
         return _unquote(raw_v)
     try:
@@ -49,7 +31,6 @@ def _arg_value(raw_v):
 
 
 def _parent_name(ppid):
-    """Best-effort: read the parent's name from /proc. It may have exited."""
     try:
         with open(f"/proc/{ppid}/comm") as fh:
             return fh.read().strip()
@@ -79,10 +60,9 @@ class ProcessAgent(Agent):
             return
         try:
             self.fh = open(self.audit_log, "r")
-            self.fh.seek(0, os.SEEK_END)          # only read new lines
+            self.fh.seek(0, os.SEEK_END)
         except PermissionError:
-            print(f"[process-agent] cannot read {self.audit_log} "
-                  f"(run the EDR with sudo)")
+            print(f"[process-agent] cannot read {self.audit_log} (run the EDR with sudo)")
             self.fh = None
 
     def collect(self):
@@ -99,7 +79,7 @@ class ProcessAgent(Agent):
                 return []
         try:
             if os.stat(self.audit_log).st_size < self.fh.tell():
-                self.fh.close()                   # file rotated or truncated
+                self.fh.close()                   # rotated or truncated
                 self.fh = open(self.audit_log, "r")
         except FileNotFoundError:
             self.fh = None
@@ -147,7 +127,6 @@ class ProcessAgent(Agent):
 
 
 if __name__ == "__main__":
-    # Standalone mode for testing collect() without the full EDR.
     import time
     p = base_parser("RCE process agent (auditd execve)")
     p.add_argument("--audit-log", default=AUDIT_LOG)

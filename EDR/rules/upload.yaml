@@ -1,10 +1,6 @@
-# Owner: Louis. Attack slice: Malicious file upload.
-# Rules fire when ALL conditions match one file_change event (001-003),
-# or one http_request event (004).
-#
-# The fim-agent only watches the upload folder, so every file_change is
-# already in-scope - there is no need to re-check the path for "/upload",
-# which would silently break if the real folder is not named that way.
+# Owner: Louis. Attack slice: malicious file upload.
+# 001-003 match file_change events from the fim-agent; 004 matches repeated
+# POSTs to the upload endpoint (http_request), so it fires even if nothing persists.
 
 - id: FILE-UPLOAD-001
   title: Dangerous executable extension written to the upload folder
@@ -17,13 +13,7 @@
     - {field: path, op: regex, value: "\\.(php|jsp|asp|aspx|exe|sh|jar|py)$"}
   response: quarantine_file
 
-# Juice Shop's upload route is meant to accept PDF/XML/ZIP only. Anything with
-# another extension that still lands on disk slipped past the type check. The
-# dangerous executable extensions are handled by FILE-UPLOAD-001 above, so they
-# are excluded here to keep the two rules from both firing on one file.
-# Note: a file with disguised CONTENT but an allowed extension (e.g. a JPG
-# renamed to .pdf) cannot be caught from the Event schema, which carries no
-# magic-byte/content field - detect those by content-type at the web layer.
+# Any disallowed extension (PDF/XML/ZIP are allowed); dangerous ones are 001's.
 - id: FILE-UPLOAD-002
   title: Disallowed file type created in the upload folder
   owner: Louis
@@ -35,8 +25,6 @@
     - {field: path, op: regex, value: "\\.(?!pdf$|xml$|zip$|php$|jsp$|asp$|aspx$|exe$|sh$|jar$|py$)[a-z0-9]+$"}
   response: quarantine_file
 
-# Juice Shop's stated max upload size is 100000 bytes. Anything larger that
-# still lands on disk means the size check was client-side only.
 - id: FILE-UPLOAD-003
   title: Oversized file accepted past the stated upload limit
   owner: Louis
@@ -48,10 +36,6 @@
     - {field: size, op: gt, value: 100000}
   response: none
 
-# Repeated hits on the upload endpoint in a short window, regardless of
-# outcome, usually mean someone is fuzzing filename/content-type bypasses
-# rather than a normal user uploading once. This reads the web agent's
-# http_request events, so it fires even when nothing is persisted to disk.
 - id: FILE-UPLOAD-004
   title: Repeated requests to the file-upload endpoint
   owner: Louis

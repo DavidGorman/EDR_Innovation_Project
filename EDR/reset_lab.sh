@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# reset_lab.sh - put the lab back to a clean state between demo runs.
-# Run on the Juice Shop VM with sudo:  sudo ./reset_lab.sh
+# Owner: David. Resets the lab between demo runs (flush iptables, clear logs,
+# restart Juice Shop). Run on the Juice Shop VM: sudo ./reset_lab.sh
 set -u
 
 LAB_DIR="${EDR_LAB_DIR:-$HOME/edr_lab}"

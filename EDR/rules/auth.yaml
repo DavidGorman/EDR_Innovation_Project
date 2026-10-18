@@ -1,0 +1,24 @@
+# Owner: Kikiola. Attack slice: broken authentication (logic flaws, distinct
+# from Oliver's brute force). 001 = password change without the current
+# password; 002 = invalid/forged token on a protected endpoint.
+
+- id: WEB-AUTH-001
+  title: Password changed without the current password (broken auth flow)
+  owner: Kikiola
+  event_type: http_request
+  severity: HIGH
+  mitre: T1098
+  conditions:
+    - {field: path, op: regex, value: "/rest/user/change-password"}
+  response: none
+
+- id: WEB-AUTH-002
+  title: Invalid or forged token used on a protected endpoint
+  owner: Kikiola
+  event_type: http_request
+  severity: MEDIUM
+  mitre: T1550.001
+  conditions:
+    - {field: path, op: regex, value: "/rest/user/whoami"}
+    - {field: status, op: in, value: [401]}
+  response: none

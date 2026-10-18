@@ -1,14 +1,8 @@
-"""
-mini_edr.py - wires the agents, the detection engine and the responder together.
-
-  agents.collect()  ->  engine.evaluate()  ->  AlertSink + Responder
-
-Run on the Juice Shop VM:
-  sudo python3 mini_edr.py              # dry-run: alerts only, nothing is touched
-  sudo python3 mini_edr.py --respond    # perform responses (LAB ONLY)
-
-sudo is needed so the process-agent can read audit.log.
-"""
+#!/usr/bin/env python3
+# Owner: David. Wires the agents, the detection engine and the responder:
+# agents.collect() -> engine.evaluate() -> AlertSink + Responder.
+# Run on the Juice Shop VM: sudo python3 mini_edr.py [--respond]  (sudo is
+# needed so the process-agent can read audit.log).
 
 import os
 import time
@@ -20,19 +14,22 @@ from responder import Responder
 from agent_web import WebAgent
 from agent_process import ProcessAgent
 
-# Louis's file-upload agent. Stays optional until agent_fim.py is in the folder,
-# so the EDR still runs if it is missing.
+# Louis's file agent stays optional, so the EDR still runs without it.
 try:
     from agent_fim import FileIntegrityAgent
     HAVE_FIM = True
 except ImportError:
     HAVE_FIM = False
 
+# Juice Shop's dated access log on our VM; the web agent follows the rotation.
+WEB_ACCESS_LOG = os.environ.get("JS_ACCESS_LOG",
+                                "/home/juice/juice-shop/logs/access.log")
+
 
 def build_agents(args):
     agents = [
-        WebAgent(os.path.join(LAB_DIR, "access.log"), interval=args.interval),
-        ProcessAgent(interval=args.interval),
+        WebAgent(WEB_ACCESS_LOG, interval=args.interval),
+        ProcessAgent(interval=args.interval, key="exec"),   # audit key on our VM
     ]
     if HAVE_FIM:
         agents.append(FileIntegrityAgent(interval=args.interval))
@@ -62,8 +59,8 @@ def main():
                 events.extend(agent.collect())
             for alert in engine.evaluate(events):
                 sink.show(alert)
-                responder.handle(alert)      # sets the outcome
-                sink.persist(alert)          # write after the outcome is known
+                responder.handle(alert)
+                sink.persist(alert)
             time.sleep(args.interval)
     except KeyboardInterrupt:
         print("\n[*] Mini-EDR shut down.")

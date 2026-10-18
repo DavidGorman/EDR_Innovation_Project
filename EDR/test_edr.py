@@ -1,12 +1,5 @@
-"""
-test_edr.py - quick offline checks for the engine and the agent parsers.
-
-Run:  python3 test_edr.py
-
-These do NOT need the VM, auditd or Juice Shop. They feed synthetic data in
-and check the right thing comes out. Use them after any change to the engine,
-the web parser or the audit parser before you push.
-"""
+# Owner: David. Offline checks for the engine and the agent parsers (no VM
+# needed). Run `python3 test_edr.py` after any change before pushing.
 
 import os
 import tempfile
@@ -80,6 +73,27 @@ def test_process_agent_parses_audit():
     print("ok: process-agent parses an execve record from audit.log")
 
 
+def test_process_agent_decodes_hex_args():
+    """A shell command with special chars comes through hex-encoded; decode it."""
+    from agent_process import ProcessAgent
+    fd, path = tempfile.mkstemp()
+    os.close(fd)
+    agent = ProcessAgent(audit_log=path, interval=1)
+    hexarg = "echo X;id;echo Y".encode().hex()
+    sample = (
+        'type=SYSCALL msg=audit(1760426000.000:500): arch=c000003e syscall=59 '
+        'ppid=1154 pid=6001 uid=1000 comm="sh" exe="/usr/bin/dash" key="proc_exec"\n'
+        f'type=EXECVE msg=audit(1760426000.000:500): argc=3 a0="/bin/sh" a1="-c" a2={hexarg}\n'
+    )
+    with open(path, "a") as fh:
+        fh.write(sample)
+    events = agent.collect()
+    os.unlink(path)
+    assert len(events) == 1, events
+    assert events[0].data["cmdline"] == "/bin/sh -c echo X;id;echo Y", events[0].data["cmdline"]
+    print("ok: process-agent decodes hex-encoded execve args")
+
+
 def test_audit_record_without_key_is_ignored():
     from agent_process import ProcessAgent
     fd, path = tempfile.mkstemp()
@@ -150,6 +164,7 @@ if __name__ == "__main__":
     test_benign_process_is_quiet()
     test_mttd_is_stamped()
     test_process_agent_parses_audit()
+    test_process_agent_decodes_hex_args()
     test_audit_record_without_key_is_ignored()
     test_web_agent_parses_and_decodes()
     test_brute_force_threshold()

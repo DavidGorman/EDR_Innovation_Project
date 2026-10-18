@@ -1,0 +1,76 @@
+# Owner: David (integration). All test cases for the five slices. run_eval.py
+# runs each command from attacker-playbook/; expected_rule "none" = benign.
+
+# ============================ RCE (David) ============================
+- {id: TC-RCE-01, owner: David, label: malicious, expected_rule: PROC-RCE-001,
+   command: 'python3 scripts/08_ssti.py --target http://192.168.100.51:3000 --email admin@juice-sh.op --password admin123 --cmd "id"'}
+- {id: TC-RCE-02, owner: David, label: malicious, expected_rule: PROC-RCE-001,
+   command: 'python3 scripts/08_ssti.py --target http://192.168.100.51:3000 --email admin@juice-sh.op --password admin123 --cmd "uname -a"'}
+- {id: TC-RCE-03, owner: David, label: malicious, expected_rule: PROC-RCE-001,
+   command: 'python3 scripts/08_ssti.py --target http://192.168.100.51:3000 --email admin@juice-sh.op --password admin123 --cmd "cat /etc/passwd"'}
+- {id: TC-RCE-B01, owner: David, label: benign, expected_rule: none,
+   command: 'python3 scripts/09_rce.py --target http://192.168.100.51:3000 --mode dos-loop'}
+- {id: TC-RCE-B02, owner: David, label: benign, expected_rule: none,
+   command: 'python3 scripts/01_normal_login.py'}
+- {id: TC-RCE-B03, owner: David, label: benign, expected_rule: none,
+   command: 'curl -s "http://192.168.100.51:3000/rest/products/search?q=apple" -o /dev/null'}
+
+# ======================= Broken auth (Kikiola) =======================
+- {id: TC-AUTH-01, owner: Kikiola, label: malicious, expected_rule: WEB-AUTH-001,
+   command: 'python3 scripts/10_password_change.py'}
+- {id: TC-AUTH-02, owner: Kikiola, label: malicious, expected_rule: WEB-AUTH-002,
+   command: 'python3 scripts/07_invalid_token.py'}
+- {id: TC-AUTH-03, owner: Kikiola, label: malicious, expected_rule: WEB-AUTH-002,
+   command: 'curl -s -H "Authorization: Bearer forged.invalid.token" "http://192.168.100.51:3000/rest/user/whoami" -o /dev/null'}
+- {id: TC-AUTH-B01, owner: Kikiola, label: benign, expected_rule: none,
+   command: 'python3 scripts/01_normal_login.py'}
+- {id: TC-AUTH-B02, owner: Kikiola, label: benign, expected_rule: none,
+   command: 'curl -s "http://192.168.100.51:3000/" -o /dev/null'}
+- {id: TC-AUTH-B03, owner: Kikiola, label: benign, expected_rule: none,
+   command: 'curl -s "http://192.168.100.51:3000/rest/products/search?q=juice" -o /dev/null'}
+
+# ========================= SQL injection (Thapanawat) =========================
+- {id: TC-SQLI-01, owner: Thapanawat, label: malicious, expected_rule: WEB-SQLI-001,
+   command: 'python3 scripts/02_sqli.py http://192.168.100.51:3000'}
+- {id: TC-SQLI-B01, owner: Thapanawat, label: benign, expected_rule: none,
+   command: 'python3 benign/search.py --term "O''Brien"'}
+- {id: TC-SQLI-B02, owner: Thapanawat, label: benign, expected_rule: none,
+   command: 'python3 benign/search.py --term "d''Artagnan sword"'}
+- {id: TC-SQLI-B03, owner: Thapanawat, label: benign, expected_rule: none,
+   command: 'python3 benign/search.py --term "union jack flag"'}
+- {id: TC-SQLI-B04, owner: Thapanawat, label: benign, expected_rule: none,
+   command: 'python3 benign/search.py --term "best selection"'}
+- {id: TC-SQLI-B05, owner: Thapanawat, label: benign, expected_rule: none,
+   command: 'python3 benign/search.py --term "Sleepwell pillow"'}
+- {id: TC-SQLI-B06, owner: Thapanawat, label: benign, expected_rule: none,
+   command: 'python3 benign/search.py --term "order by phone"'}
+- {id: TC-SQLI-B07, owner: Thapanawat, label: benign, expected_rule: none,
+   command: 'python3 benign/search.py --term "drop table lamp"'}
+
+# =========================== Brute force (Oliver) ===========================
+- {id: TC-BRUTE-01, owner: Oliver, label: malicious, expected_rule: WEB-BRUTE-001,
+   command: 'python3 scripts/03_brute_force.py'}
+- {id: TC-BRUTE-B01, owner: Oliver, label: benign, expected_rule: none,
+   command: 'python3 benign/brute.py --case mistyped-password'}
+- {id: TC-BRUTE-B02, owner: Oliver, label: benign, expected_rule: none,
+   command: 'python3 benign/brute.py --case slow-failures'}
+- {id: TC-BRUTE-B03, owner: Oliver, label: benign, expected_rule: none,
+   command: 'python3 benign/brute.py --case shared-ip'}
+
+# ========================= File upload (Louis) =========================
+- {id: TC-UPLOAD-01, owner: Louis, label: malicious, expected_rule: FILE-UPLOAD-002,
+   command: 'python3 scripts/11_file_upload.py --case renamed_extension'}
+- {id: TC-UPLOAD-02, owner: Louis, label: malicious, expected_rule: FILE-UPLOAD-001,
+   command: 'python3 scripts/11_file_upload.py --case dangerous_extension'}
+- {id: TC-UPLOAD-03, owner: Louis, label: malicious, expected_rule: FILE-UPLOAD-003,
+   command: 'python3 scripts/11_file_upload.py --case oversized'}
+- {id: TC-UPLOAD-04, owner: Louis, label: malicious, expected_rule: FILE-UPLOAD-004,
+   command: 'python3 scripts/11_file_upload.py --case fuzz_endpoint'}
+- {id: TC-UPLOAD-B01, owner: Louis, label: benign, expected_rule: none,
+   command: 'python3 benign/upload_legit_pdf.py'}
+- {id: TC-UPLOAD-B02, owner: Louis, label: benign, expected_rule: none,
+   command: 'python3 benign/upload_under_limit_pdf.py'}
+- {id: TC-UPLOAD-B03, owner: Louis, label: benign, expected_rule: none,
+   command: 'python3 benign/upload_zip.py'}
+- {id: TC-UPLOAD-B04, owner: Louis, label: benign, expected_rule: none,
+   command: 'python3 benign/upload_single_pdf_slow.py'}

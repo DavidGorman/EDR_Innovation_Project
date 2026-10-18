@@ -1,26 +1,7 @@
-"""
-agent_web.py - HTTP telemetry for the EDR7 mini-EDR.
-
-Owner: David (shared web-agent). Used by the SQLi, brute-force and
-broken-auth slices, so it must stay stable.
-
-Reads the Juice Shop access log and emits one http_request Event per request.
-It only collects now; detection lives in the rules. Changes from the starter
-code:
-  - emits Events instead of doing its own detection and responding
-  - follows daily log rotation (access.log, access.log.YYYY-MM-DD)
-  - URL-decodes the path (twice) so encoded payloads are visible to rules
-  - carries raw_path, method, status (int) and user_agent
-
-Known limit: the access log records URLs only, never POST bodies. Attacks sent
-in a request body (the login SQLi, the B2B order RCE) will not show up here.
-Detect those by their side effects (status codes, processes, files).
-
-Open question for the VM: earlier testing suggested Juice Shop logs to journald
-(unit juiceshop.service), not to an access file. If that is true on our VM,
-this agent needs a journald reader instead of a file reader. Flag it to David
-and he will swap the source; the Events it emits stay the same either way.
-"""
+#!/usr/bin/env python3
+# Owner: David (shared web-agent, used by the SQLi, brute-force and broken-auth
+# slices). Reads the Juice Shop access log and emits one http_request Event per
+# request; follows daily log rotation and URL-decodes the path for the rules.
 
 import glob
 import os
@@ -30,12 +11,9 @@ from urllib.parse import unquote
 
 from edr_core import Agent, Event, LAB_DIR, base_parser
 
-# Lenient: pulls ip, method, path and status out of common/combined log lines.
 LINE = re.compile(r'^(?P<ip>\S+).*?"(?P<method>\S+)\s(?P<path>\S+)[^"]*"\s(?P<status>\d{3})')
-# Trailing "...referer" "user-agent" when present.
 UA = re.compile(r'"[^"]*"\s+"(?P<ua>[^"]*)"\s*$')
-# Bracketed timestamp: [10/Oct/2026:13:55:36 +1100]
-TS = re.compile(r"\[([^\]]+)\]")
+TS = re.compile(r"\[([^\]]+)\]")        # [10/Oct/2026:13:55:36 +1100]
 
 
 def _decode(path):
@@ -69,7 +47,7 @@ class WebAgent(Agent):
     def _open_latest(self):
         path = self._latest_path()
         if not os.path.exists(path):
-            open(path, "a").close()               # make sure it exists
+            open(path, "a").close()
         self.fh = open(path, "r")
         self.fh.seek(0, os.SEEK_END)
         self.cur = path
@@ -103,7 +81,8 @@ class WebAgent(Agent):
                 event_type="http_request",
                 observed_at=_log_time(raw) or time.time(),
                 data={
-                    "ip": m.group("ip"),
+                    # strip IPv4-mapped IPv6 (::ffff:A.B.C.D) so iptables accepts it
+                    "ip": m.group("ip").removeprefix("::ffff:"),
                     "method": m.group("method"),
                     "path": _decode(m.group("path")),
                     "raw_path": m.group("path"),

@@ -1,5 +1,5 @@
-# Owner: Oliver. Attack slice: Brute-force login.
-# Fires when one IP racks up 5 failed logins (HTTP 401) within 15 seconds.
+# Owner: Oliver. Attack slice: brute-force login.
+# Fires when one IP makes 5 failed logins (HTTP 401) within 15 seconds.
 
 - id: WEB-BRUTE-001
   title: Brute-force login

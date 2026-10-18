@@ -1,5 +1,6 @@
-# Owner: Thapanawat. Attack slice: SQL injection (product search).
-# Rules fire when ALL conditions match one http_request event.
+# Owner: Thapanawat. Attack slice: SQL injection in the product search.
+# 001 matches injection patterns in the query; 002 catches error-based probes
+# (a 500 on the search endpoint carrying a quote or SQL keyword).
 
 - id: WEB-SQLI-001
   title: SQL injection in product search
@@ -13,7 +14,7 @@
   response: block_ip
 
 - id: WEB-SQLI-002
-  title: Error-based SQL injection in product search (obfuscated)
+  title: Error-based SQL injection in product search
   owner: Thapanawat
   event_type: http_request
   severity: MEDIUM
@@ -21,5 +22,5 @@
   conditions:
     - {field: path, op: regex, value: "/rest/products/search"}
     - {field: status, op: in, value: [500]}
-    - {field: path, op: regex, value: "'[^&]*('|--|#|\\)|;|=)|/\\*|\\*/|char\\s*\\(|concat\\s*\\(|union|select|sleep|benchmark"}
+    - {field: path, op: regex, value: "[\"']|/\\*|\\*/|char\\s*\\(|concat\\s*\\(|union|select|sleep|benchmark"}
   response: none

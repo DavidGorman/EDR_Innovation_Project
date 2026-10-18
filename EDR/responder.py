@@ -1,16 +1,7 @@
-"""
-responder.py - performs the response actions named by rules.
-
-Every response goes through here. Dry-run is the default: nothing is actually
-done unless the EDR is started with --respond. A response never crashes the
-EDR, and a target that was already handled is skipped.
-
-Response names map to methods:
-  block_ip        -> iptables DROP from details.ip
-  kill_process    -> SIGKILL details.pid
-  quarantine_file -> move details.path into ~/edr_lab/quarantine
-  none            -> alert only
-"""
+#!/usr/bin/env python3
+# Owner: David. Performs the response named by each rule (block_ip,
+# kill_process, quarantine_file). Dry-run by default; a response never crashes
+# the EDR and a target already handled is skipped.
 
 import os
 import shutil
@@ -62,6 +53,7 @@ class Responder:
         ip = alert.details.get("ip")
         if not ip or ip in self.blocked_ips:
             return
+        ip = ip.removeprefix("::ffff:")   # IPv4-mapped IPv6 -> plain IPv4
         subprocess.run(["iptables", "-A", "INPUT", "-s", ip, "-j", "DROP"],
                        check=True, capture_output=True)
         self.blocked_ips.add(ip)
