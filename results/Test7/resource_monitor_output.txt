@@ -1,0 +1,8 @@
+juice@juiceshop:~$ python3 resource_monitor.py
+[monitor] sampling ['edr', 'wazuh'] every 1.0s -> usage.csv (Ctrl-C to stop)
+^C
+[monitor] stopped
+[monitor] wrote 2090 samples to usage.csv
+
+  edr      procs= 1  CPU mean=  0.0% max=  2.0%   RSS mean=  26.9MB max=  26.9MB
+  wazuh    procs= 5  CPU mean=  0.1% max=  2.0%   RSS mean=  74.4MB max=  74.7MB

@@ -1,0 +1,33 @@
+case_id,label,expected_rule,launched_at,finished_at,command
+TC-RCE-01,malicious,PROC-RCE-001,1792546556.290,1792546558.222,"python3 scripts/08_ssti.py --target http://192.168.100.51:3000 --email admin@juice-sh.op --password admin123 --cmd ""id"""
+TC-RCE-02,malicious,PROC-RCE-001,1792546578.223,1792546579.601,"python3 scripts/08_ssti.py --target http://192.168.100.51:3000 --email admin@juice-sh.op --password admin123 --cmd ""uname -a"""
+TC-RCE-03,malicious,PROC-RCE-001,1792546599.602,1792546600.928,"python3 scripts/08_ssti.py --target http://192.168.100.51:3000 --email admin@juice-sh.op --password admin123 --cmd ""cat /etc/passwd"""
+TC-RCE-B01,benign,none,1792546620.929,1792546622.155,python3 scripts/09_rce.py --target http://192.168.100.51:3000 --mode dos-loop
+TC-RCE-B02,benign,none,1792546642.156,1792546642.322,python3 scripts/01_normal_login.py
+TC-RCE-B03,benign,none,1792546662.323,1792546662.356,"curl -s ""http://192.168.100.51:3000/rest/products/search?q=apple"" -o /dev/null"
+TC-AUTH-01,malicious,WEB-AUTH-001,1792546682.357,1792546682.524,python3 scripts/10_password_change.py
+TC-AUTH-02,malicious,WEB-AUTH-002,1792546702.524,1792546702.641,python3 scripts/07_invalid_token.py
+TC-AUTH-03,malicious,WEB-AUTH-002,1792546722.641,1792546722.659,"curl -s -H ""Authorization: Bearer forged.invalid.token"" ""http://192.168.100.51:3000/rest/user/whoami"" -o /dev/null"
+TC-AUTH-B01,benign,none,1792546742.659,1792546742.776,python3 scripts/01_normal_login.py
+TC-AUTH-B02,benign,none,1792546762.777,1792546762.795,"curl -s ""http://192.168.100.51:3000/"" -o /dev/null"
+TC-AUTH-B03,benign,none,1792546782.795,1792546782.829,"curl -s ""http://192.168.100.51:3000/rest/products/search?q=juice"" -o /dev/null"
+TC-SQLI-01,malicious,WEB-SQLI-001,1792546802.830,1792546803.097,python3 scripts/02_sqli.py http://192.168.100.51:3000
+TC-SQLI-B01,benign,none,1792546823.098,1792546823.214,"python3 benign/search.py --term ""O'Brien"""
+TC-SQLI-B02,benign,none,1792546843.215,1792546843.331,"python3 benign/search.py --term ""d'Artagnan sword"""
+TC-SQLI-B03,benign,none,1792546863.331,1792546863.449,"python3 benign/search.py --term ""union jack flag"""
+TC-SQLI-B04,benign,none,1792546883.449,1792546883.566,"python3 benign/search.py --term ""best selection"""
+TC-SQLI-B05,benign,none,1792546903.567,1792546903.684,"python3 benign/search.py --term ""Sleepwell pillow"""
+TC-SQLI-B06,benign,none,1792546923.684,1792546923.801,"python3 benign/search.py --term ""order by phone"""
+TC-SQLI-B07,benign,none,1792546943.802,1792546943.918,"python3 benign/search.py --term ""drop table lamp"""
+TC-BRUTE-01,malicious,WEB-BRUTE-001,1792546963.919,1792547066.070,python3 scripts/03_brute_force.py
+TC-BRUTE-B01,benign,none,1792547086.071,1792547090.278,python3 benign/brute.py --case mistyped-password
+TC-BRUTE-B02,benign,none,1792547110.279,1792547130.467,python3 benign/brute.py --case slow-failures
+TC-BRUTE-B03,benign,none,1792547150.467,1792547154.622,python3 benign/brute.py --case shared-ip
+TC-UPLOAD-01,malicious,FILE-UPLOAD-002,1792547174.623,1792547174.740,python3 scripts/11_file_upload.py --case renamed_extension
+TC-UPLOAD-02,malicious,FILE-UPLOAD-001,1792547194.741,1792547194.858,python3 scripts/11_file_upload.py --case dangerous_extension
+TC-UPLOAD-03,malicious,FILE-UPLOAD-003,1792547214.858,1792547215.026,python3 scripts/11_file_upload.py --case oversized
+TC-UPLOAD-04,malicious,FILE-UPLOAD-004,1792547235.026,1792547235.193,python3 scripts/11_file_upload.py --case fuzz_endpoint
+TC-UPLOAD-B01,benign,none,1792547255.194,1792547255.311,python3 benign/upload_legit_pdf.py
+TC-UPLOAD-B02,benign,none,1792547275.311,1792547275.429,python3 benign/upload_under_limit_pdf.py
+TC-UPLOAD-B03,benign,none,1792547295.430,1792547295.597,python3 benign/upload_zip.py
+TC-UPLOAD-B04,benign,none,1792547315.597,1792547340.749,python3 benign/upload_single_pdf_slow.py
