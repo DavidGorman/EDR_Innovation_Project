@@ -1,0 +1,8 @@
+::ffff:127.0.0.1 - - [20/Oct/2026:11:44:21 +0000] "GET /rest/products/search?q=test1 HTTP/1.1" 200 30 "-" "curl/8.5.0"
+::ffff:127.0.0.1 - - [20/Oct/2026:11:44:21 +0000] "GET /rest/products/search?q=test2 HTTP/1.1" 200 30 "-" "curl/8.5.0"
+::ffff:127.0.0.1 - - [20/Oct/2026:11:44:21 +0000] "GET /rest/products/search?q=test3 HTTP/1.1" 200 30 "-" "curl/8.5.0"
+::ffff:127.0.0.1 - - [20/Oct/2026:11:46:02 +0000] "GET /rest/products/search?q=test1 HTTP/1.1" 200 30 "-" "curl/8.5.0"
+::ffff:127.0.0.1 - - [20/Oct/2026:11:46:02 +0000] "GET /rest/products/search?q=test2 HTTP/1.1" 200 30 "-" "curl/8.5.0"
+::ffff:127.0.0.1 - - [20/Oct/2026:11:46:02 +0000] "GET /rest/products/search?q=test3 HTTP/1.1" 200 30 "-" "curl/8.5.0"
+::ffff:127.0.0.1 - - [20/Oct/2026:12:03:07 +0000] "POST /rest/user/login HTTP/1.1" 200 799 "-" "curl/8.5.0"
+::ffff:127.0.0.1 - - [20/Oct/2026:12:03:34 +0000] "GET /rest/products/search?q=snaptest HTTP/1.1" 200 30 "-" "curl/8.5.0"

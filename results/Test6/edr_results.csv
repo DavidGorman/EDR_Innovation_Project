@@ -1,0 +1,33 @@
+case_id,slice,label,expected_rule,verdict,fired,mttd_s
+TC-RCE-01,RCE,malicious,PROC-RCE-001,TP,PROC-RCE-001|PROC-RCE-002,1.55
+TC-RCE-02,RCE,malicious,PROC-RCE-001,TP,PROC-RCE-001|PROC-RCE-002,0.83
+TC-RCE-03,RCE,malicious,PROC-RCE-001,TP,PROC-RCE-001,0.46
+TC-RCE-B01,RCE,benign,none,TN,,
+TC-RCE-B02,RCE,benign,none,TN,,
+TC-RCE-B03,RCE,benign,none,TN,,
+TC-AUTH-01,Broken auth,malicious,WEB-AUTH-001,TP,WEB-AUTH-001,0.64
+TC-AUTH-02,Broken auth,malicious,WEB-AUTH-002,FN,,
+TC-AUTH-03,Broken auth,malicious,WEB-AUTH-002,FN,,
+TC-AUTH-B01,Broken auth,benign,none,TN,,
+TC-AUTH-B02,Broken auth,benign,none,TN,,
+TC-AUTH-B03,Broken auth,benign,none,TN,,
+TC-SQLI-01,SQL injection,malicious,WEB-SQLI-001,TP,WEB-SQLI-001|WEB-SQLI-002,2.10
+TC-SQLI-B01,SQL injection,benign,none,TN,,
+TC-SQLI-B02,SQL injection,benign,none,TN,,
+TC-SQLI-B03,SQL injection,benign,none,TN,,
+TC-SQLI-B04,SQL injection,benign,none,TN,,
+TC-SQLI-B05,SQL injection,benign,none,TN,,
+TC-SQLI-B06,SQL injection,benign,none,TN,,
+TC-SQLI-B07,SQL injection,benign,none,TN,,
+TC-BRUTE-01,Brute force,malicious,WEB-BRUTE-001,TP,WEB-BRUTE-001,4.90
+TC-BRUTE-B01,Brute force,benign,none,FP,WEB-BRUTE-001,
+TC-BRUTE-B02,Brute force,benign,none,TN,,
+TC-BRUTE-B03,Brute force,benign,none,TN,,
+TC-UPLOAD-01,File upload,malicious,FILE-UPLOAD-002,FN,,
+TC-UPLOAD-02,File upload,malicious,FILE-UPLOAD-001,FN,,
+TC-UPLOAD-03,File upload,malicious,FILE-UPLOAD-003,FN,,
+TC-UPLOAD-04,File upload,malicious,FILE-UPLOAD-004,FN,,
+TC-UPLOAD-B01,File upload,benign,none,TN,,
+TC-UPLOAD-B02,File upload,benign,none,TN,,
+TC-UPLOAD-B03,File upload,benign,none,FP,FILE-UPLOAD-002,
+TC-UPLOAD-B04,File upload,benign,none,TN,,
