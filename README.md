@@ -136,14 +136,5 @@ python3 score_eval.py --alerts ~/edr_lab/alerts.jsonl --attack-log /path/to/atta
 
 Use `--offset` to correct any clock skew between Kali and the VM.
 
-## Team
-
-Built by a team of five for ICT30016. Each member owned one attack type: its rules, test cases and attack scripts.
-
-- **David Gorman** (technical lead): architecture and integration spec, detection engine, responder, shared core, web and process agents, RCE detection, evaluation harness, and the Wazuh comparison
-- **Thapanawat**: SQL injection
-- **Oliver**: brute force
-- **Kikiola**: broken authentication
-- **Louis**: file upload and the FIM agent
 
 The original integration spec the team built to is in [`EDR/EDR7 Module Integration Spec.pdf`](EDR/EDR7%20Module%20Integration%20Spec.pdf).
